@@ -393,7 +393,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                 Flexible(
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 0),
-                    width: _animate ? widthMax * .95 : widthMax,
+                    width: _animate ? widthMax * .9 : widthMax,
                     decoration: BoxDecoration(
                       borderRadius: widget.searchBarStyle.borderRadius,
                       color: widget.searchBarStyle.backgroundColor,
@@ -425,12 +425,11 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                   child: AnimatedOpacity(
                     opacity: _animate ? 1.0 : 0,
                     curve: Curves.easeIn,
-                    duration: Duration(milliseconds: 0),
+                    duration: Duration(milliseconds: 10),
                     child: AnimatedContainer(
                       duration: Duration(milliseconds: 0),
-                      width: _animate
-                          ? MediaQuery.of(context).size.width * .05
-                          : 0,
+                      width:
+                          _animate ? MediaQuery.of(context).size.width * .1 : 0,
                       child: Container(
                         color: Colors.transparent,
                         child: Center(
