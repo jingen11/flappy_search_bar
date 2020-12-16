@@ -413,7 +413,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                     ),
                     
                   ),
-                ),
+              ]),
                 GestureDetector(
                   onTap: _cancel,
                   child: Container(
@@ -423,7 +423,6 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                         ),
                       ), 
                 ),
-              ],
             ),
           ),
         ),
