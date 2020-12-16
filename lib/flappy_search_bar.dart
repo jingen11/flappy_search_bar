@@ -31,7 +31,8 @@ class SearchBarController<T> {
   CancelableOperation _cancelableOperation;
   int minimumChars;
 
-  void setTextController(TextEditingController _searchQueryController, minimunChars) {
+  void setTextController(
+      TextEditingController _searchQueryController, minimunChars) {
     this._searchQueryController = _searchQueryController;
     this.minimumChars = minimunChars;
   }
@@ -268,7 +269,8 @@ class _SearchBarState<T> extends State<SearchBar<T>>
     searchBarController =
         widget.searchBarController ?? SearchBarController<T>();
     searchBarController.setListener(this);
-    searchBarController.setTextController(_searchQueryController, widget.minimumChars);
+    searchBarController.setTextController(
+        _searchQueryController, widget.minimumChars);
   }
 
   @override
@@ -387,7 +389,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                 Flexible(
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 200),
-                    width: _animate ? widthMax * .8 : widthMax,
+                    width: _animate ? widthMax * .9 : widthMax,
                     decoration: BoxDecoration(
                       borderRadius: widget.searchBarStyle.borderRadius,
                       color: widget.searchBarStyle.backgroundColor,
@@ -422,7 +424,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                     child: AnimatedContainer(
                       duration: Duration(milliseconds: 200),
                       width:
-                          _animate ? MediaQuery.of(context).size.width * .2 : 0,
+                          _animate ? MediaQuery.of(context).size.width * .1 : 0,
                       child: Container(
                         color: Colors.transparent,
                         child: Center(
