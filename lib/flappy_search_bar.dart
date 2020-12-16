@@ -23,19 +23,12 @@ class SearchBarController<T> {
   final List<T> _list = [];
   final List<T> _filteredList = [];
   final List<T> _sortedList = [];
-  TextEditingController _searchQueryController;
+  final searchQueryController = TextEditingController();
   String _lastSearchedText;
   Future<List<T>> Function(String text) _lastSearchFunction;
   _ControllerListener _controllerListener;
   int Function(T a, T b) _lastSorting;
   CancelableOperation _cancelableOperation;
-  int minimumChars;
-
-  void setTextController(
-      TextEditingController _searchQueryController, minimunChars) {
-    this._searchQueryController = _searchQueryController;
-    this.minimumChars = minimunChars;
-  }
 
   void setListener(_ControllerListener _controllerListener) {
     this._controllerListener = _controllerListener;
@@ -45,7 +38,7 @@ class SearchBarController<T> {
     _controllerListener?.onClear();
   }
 
-  void _search(
+  void search(
       String text, Future<List<T>> Function(String text) onSearch) async {
     _controllerListener?.onLoading();
     try {
@@ -53,6 +46,9 @@ class SearchBarController<T> {
           (!_cancelableOperation.isCompleted ||
               !_cancelableOperation.isCanceled)) {
         _cancelableOperation.cancel();
+      }
+      if (searchQueryController.text == '') {
+        searchQueryController.text = text;
       }
       _cancelableOperation = CancelableOperation.fromFuture(
         onSearch(text),
@@ -73,17 +69,9 @@ class SearchBarController<T> {
     }
   }
 
-  void injectSearch(
-      String searchText, Future<List<T>> Function(String text) onSearch) {
-    if (searchText != null && searchText.length >= minimumChars) {
-      _searchQueryController.text = searchText;
-      _search(searchText, onSearch);
-    }
-  }
-
   void replayLastSearch() {
     if (_lastSearchFunction != null && _lastSearchedText != null) {
-      _search(_lastSearchedText, _lastSearchFunction);
+      search(_lastSearchedText, _lastSearchFunction);
     }
   }
 
@@ -130,6 +118,9 @@ typedef ScaledTile IndexedScaledTileBuilder(int index);
 class SearchBar<T> extends StatefulWidget {
   /// Future returning searched items
   final Future<List<T>> Function(String text) onSearch;
+
+  /// Function called right before leaving the screen
+  final void Function() onPop;
 
   /// List of items showed by default
   final List<T> suggestions;
@@ -220,6 +211,7 @@ class SearchBar<T> extends StatefulWidget {
     Key key,
     @required this.onSearch,
     @required this.onItemFound,
+    this.onPop,
     this.searchBarController,
     this.minimumChars = 3,
     this.debounceDuration = const Duration(milliseconds: 500),
@@ -257,7 +249,6 @@ class _SearchBarState<T> extends State<SearchBar<T>>
     with TickerProviderStateMixin, _ControllerListener<T> {
   bool _loading = false;
   Widget _error;
-  final _searchQueryController = TextEditingController();
   Timer _debounce;
   bool _animate = false;
   List<T> _list = [];
@@ -269,8 +260,6 @@ class _SearchBarState<T> extends State<SearchBar<T>>
     searchBarController =
         widget.searchBarController ?? SearchBarController<T>();
     searchBarController.setListener(this);
-    searchBarController.setTextController(
-        _searchQueryController, widget.minimumChars);
   }
 
   @override
@@ -303,14 +292,15 @@ class _SearchBarState<T> extends State<SearchBar<T>>
     });
   }
 
-  _onTextChanged(String newText) async {
+  onTextChanged(String newText) async {
+    print("text changed");
     if (_debounce?.isActive ?? false) {
       _debounce.cancel();
     }
 
     _debounce = Timer(widget.debounceDuration, () async {
       if (newText.length >= widget.minimumChars && widget.onSearch != null) {
-        searchBarController._search(newText, widget.onSearch);
+        searchBarController.search(newText, widget.onSearch);
       } else {
         setState(() {
           _list.clear();
@@ -328,7 +318,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
     }
 
     setState(() {
-      _searchQueryController.clear();
+      searchBarController.searchQueryController.clear();
       _list.clear();
       _error = null;
       _loading = false;
@@ -359,10 +349,12 @@ class _SearchBarState<T> extends State<SearchBar<T>>
 
   Widget _buildContent(BuildContext context) {
     if (_error != null) {
+      print(_error);
       return _error;
     } else if (_loading) {
       return widget.loader;
-    } else if (_searchQueryController.text.length < widget.minimumChars) {
+    } else if (searchBarController.searchQueryController.text.length <
+        widget.minimumChars) {
       if (widget.placeHolder != null) return widget.placeHolder;
       return _buildListView(
           widget.suggestions, widget.buildSuggestion ?? widget.onItemFound);
@@ -386,10 +378,22 @@ class _SearchBarState<T> extends State<SearchBar<T>>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
+                GestureDetector(
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: Colors.grey[200],
+                    ),
+                    onTap: () {
+                      widget.onPop();
+                      Navigator.pop(context);
+                    }),
+                SizedBox(
+                  width: 8,
+                ),
                 Flexible(
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 200),
-                    width: _animate ? widthMax * .9 : widthMax,
+                    width: _animate ? widthMax * .8 : widthMax,
                     decoration: BoxDecoration(
                       borderRadius: widget.searchBarStyle.borderRadius,
                       color: widget.searchBarStyle.backgroundColor,
@@ -398,8 +402,9 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                       padding: widget.searchBarStyle.padding,
                       child: Theme(
                         child: TextField(
-                          controller: _searchQueryController,
-                          onChanged: _onTextChanged,
+                          autofocus: true,
+                          controller: searchBarController.searchQueryController,
+                          onChanged: onTextChanged,
                           style: widget.textStyle,
                           decoration: InputDecoration(
                             icon: widget.icon,
@@ -424,7 +429,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                     child: AnimatedContainer(
                       duration: Duration(milliseconds: 200),
                       width:
-                          _animate ? MediaQuery.of(context).size.width * .1 : 0,
+                          _animate ? MediaQuery.of(context).size.width * .2 : 0,
                       child: Container(
                         color: Colors.transparent,
                         child: Center(
