@@ -425,7 +425,7 @@ class _SearchBarState<T> extends State<SearchBar<T>>
                   child: AnimatedOpacity(
                     opacity: _animate ? 1.0 : 0,
                     curve: Curves.easeIn,
-                    duration: Duration(milliseconds: _animate ? 1000 : 0),
+                    duration: Duration(milliseconds: 0),
                     child: AnimatedContainer(
                       duration: Duration(milliseconds: 0),
                       width: _animate
